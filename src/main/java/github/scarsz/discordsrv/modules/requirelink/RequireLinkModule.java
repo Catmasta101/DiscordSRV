@@ -71,29 +71,6 @@ public class RequireLinkModule implements Listener {
                     return;
                 }
             }
-            boolean onlyCheckBannedPlayers = onlyCheckBannedPlayers();
-            if (!checkBannedPlayers() || onlyCheckBannedPlayers) {
-                boolean banned = false;
-                if (Bukkit.getServer().getBannedPlayers().stream().anyMatch(p -> p.getUniqueId().equals(playerUuid))) {
-                    if (!onlyCheckBannedPlayers) {
-                        DiscordSRV.debug("Player " + playerName + " is banned, skipping linked check");
-                        return;
-                    }
-                    banned = true;
-                }
-                if (!banned && Bukkit.getServer().getIPBans().stream().anyMatch(ip::equals)) {
-                    if (!onlyCheckBannedPlayers) {
-                        DiscordSRV.debug("Player " + playerName + " connecting with banned IP " + ip + ", skipping linked check");
-                        return;
-                    }
-                    banned = true;
-                }
-                if (onlyCheckBannedPlayers && !banned) {
-                    DiscordSRV.debug("Player " + playerName + " is bypassing link requirement because \"Only check banned players\" is enabled");
-                    return;
-                }
-            }
-
             if (!DiscordSRV.isReady) {
                 DiscordSRV.debug("Player " + playerName + " connecting before DiscordSRV is ready, denying login");
                 disallow.accept(AsyncPlayerPreLoginEvent.Result.KICK_OTHER.name(), MessageUtil.translateLegacy(getDiscordSRVStillStartingKickMessage()));
@@ -214,12 +191,6 @@ public class RequireLinkModule implements Listener {
                 return;
             }
         }
-        String ip = player.getAddress().getAddress().getHostAddress();
-        if (onlyCheckBannedPlayers() && !Bukkit.getServer().getBannedPlayers().stream().anyMatch(p -> p.getUniqueId().equals(player.getUniqueId())) && !Bukkit.getServer().getIPBans().stream().anyMatch(ip::equals)) {
-            DiscordSRV.debug("Player " + player.getName() + " is bypassing link requirement because \"Only check banned players\" is enabled");
-            return;
-        }
-
         DiscordSRV.info("Kicking player " + player.getName() + " for unlinking their accounts");
         Bukkit.getScheduler().runTask(DiscordSRV.getPlugin(), () -> player.kickPlayer(MessageUtil.translateLegacy(getUnlinkedKickMessage())));
     }
